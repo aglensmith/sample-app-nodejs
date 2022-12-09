@@ -1,5 +1,3 @@
-# 
-
 ## NextJS Sample App
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/bigcommerce/sample-app-nodejs)
