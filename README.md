@@ -1,8 +1,6 @@
-# NextJS Sample App
+# 
 
-This demo includes all of the files necessary to get started with a basic, hello world app. This app was built using NextJS, BigDesign, Typescript, and React.
-
-## App Installation
+## NextJS Sample App
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/bigcommerce/sample-app-nodejs)
 
@@ -30,3 +28,84 @@ To get the app running locally, follow these instructions:
 10. Start your dev environment in a **separate** terminal from `ngrok`. If `ngrok` restarts, update callbacks in steps 4 and 7 with the new ngrok_id.
     - `npm run dev`
 11. [Install the app and launch.](https://developer.bigcommerce.com/docs/3ef776e175eda-big-commerce-apps-quick-start#install-the-app)
+
+## Working locally without ngrok or install
+
+To work locally without having to use ngrok and install the app into a BigCommerce store, add the following to `.env` and input the corresponding values.
+
+```bash
+DEPLOY_ENV=dev
+STORE_HASH=
+AUTH_TOKEN=
+SCOPES=
+USER_ID=
+USER_EMAIL=
+```
+
+Then start the app and browse to `http://localhost:3000/api/load` -- you'll get redirected to `/context?=jwt` and the app should load as expected.
+
+```js
+export function devVerifyJWT() { // creates app context to use in local dev
+    return  {
+        "access_token": AUTH_TOKEN,
+        "context": 'stores/'.concat(STORE_HASH),
+        "owner": { id: USER_ID, email: USER_EMAIL},
+        "scope": SCOPES,
+        "store_hash": STORE_HASH,
+        "sub": 'stores/'.concat(STORE_HASH),
+        "timestamp": new Date().getTime(),
+        "user": { id: USER_ID, email: USER_EMAIL },
+        "url": '/'
+    };
+}
+
+// ...
+
+export function getBCVerify({ signed_payload_jwt }: QueryParams) {
+    if (DEPLOY_ENV == "dev") return devVerifyJWT(); // just use the dev context
+    return bigcommerceSigned.verifyJWT(signed_payload_jwt);
+}
+```
+
+## Debugging
+
+### Chrome
+
+> Once the server starts, open a new tab in Chrome and visit `chrome://inspect`, where you should see your Next.js application inside the Remote Target section. Click inspect under your application to open a separate DevTools window, then go to the Sources tab.
+
+See [nextjs docs](https://nextjs.org/docs/advanced-features/debugging) for more details and OS specific instructions. 
+
+### Vscode
+
+Create a `./.vscode/launch.json` file in this project's dir and add the following JSON.
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Next.js: debug server-side",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "npm run dev"
+      },
+      {
+        "name": "Next.js: debug client-side",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000"
+      },
+      {
+        "name": "Next.js: debug full stack",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "npm run dev",
+        "serverReadyAction": {
+          "pattern": "started server on .+, url: (https?://.+)",
+          "uriFormat": "%s",
+          "action": "debugWithChrome"
+        }
+      }
+    ]
+  }
+```

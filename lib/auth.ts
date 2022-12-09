@@ -4,7 +4,7 @@ import * as BigCommerce from 'node-bigcommerce';
 import { ApiConfig, QueryParams, SessionContextProps, SessionProps } from '../types';
 import db from './db';
 
-const { API_URL, AUTH_CALLBACK, CLIENT_ID, CLIENT_SECRET, JWT_KEY, LOGIN_URL } = process.env;
+const {API_URL, AUTH_CALLBACK, CLIENT_ID, CLIENT_SECRET, JWT_KEY, LOGIN_URL, AUTH_TOKEN, STORE_HASH, DEPLOY_ENV, SCOPES, USER_ID, USER_EMAIL} = process.env;
 
 // Used for internal configuration; 3rd party apps may remove
 const apiConfig: ApiConfig = {};
@@ -42,12 +42,29 @@ export function bigcommerceClient(accessToken: string, storeHash: string, apiVer
     });
 }
 
+// make app work locally without install / ngrok
+export function devVerifyJWT() {
+    return  {
+        "access_token": AUTH_TOKEN,
+        "context": 'stores/'.concat(STORE_HASH),
+        "owner": { id: USER_ID, email: USER_EMAIL},
+        "scope": SCOPES,
+        "store_hash": STORE_HASH,
+        "sub": 'stores/'.concat(STORE_HASH),
+        "timestamp": new Date().getTime(),
+        "user": { id: USER_ID, email: USER_EMAIL },
+        "url": '/'
+    };
+}
+
 // Authorizes app on install
 export function getBCAuth(query: QueryParams) {
     return bigcommerce.authorize(query);
 }
 // Verifies app on load/ uninstall
 export function getBCVerify({ signed_payload_jwt }: QueryParams) {
+    // make app work locally without install / ngrok
+    if (DEPLOY_ENV == "dev") return devVerifyJWT();
     return bigcommerceSigned.verifyJWT(signed_payload_jwt);
 }
 
